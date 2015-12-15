@@ -71,4 +71,8 @@ defmodule Paracelsus.MetaProcess do
     Kernel.send(Process.get(:self), {:receive, fun})
     exec()
   end
+
+  def my_receive(fun) do
+    __MODULE__.receive(fun)
+  end
 end
