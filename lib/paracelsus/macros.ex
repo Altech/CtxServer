@@ -11,7 +11,7 @@ defmodule Paracelsus.Macros do
 
   def receive_ast(ast) do
     quote do
-      receive(unquote(args))
+      # receive(unquote(args))
     end
   end
 
