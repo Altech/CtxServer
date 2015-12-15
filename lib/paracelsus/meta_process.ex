@@ -48,6 +48,12 @@ defmodule Paracelsus.MetaProcess do
 
   def meta_single(queue, state, exec) do
     fn
+      {:message, message} ->
+        IO.puts "{:message, _}"
+        if state == :dormant do
+          Kernel.send(Kernel.self, :receive)
+        end
+        kernel_receive(meta_single(queue ++ [message], :active, exec))
       :receive ->
         IO.puts ":receive"
         case queue do
@@ -57,12 +63,6 @@ defmodule Paracelsus.MetaProcess do
           _ ->
             kernel_receive(meta_single(queue, :dormant, exec))
         end
-      {:message, message} ->
-        IO.puts "{:message, _}"
-        if state == :dormant do
-          Kernel.send(Kernel.self, :receive)
-        end
-        kernel_receive(meta_single(queue ++ [message], :active, exec))
       :exit ->
         IO.puts ":exit"
       x ->
