@@ -33,7 +33,7 @@ defmodule Paracelsus.MetaProcess do
             :active ->
               meta_single(queue ++ [message], fun, :active, exec).()
           end
-        {:end} ->
+        {:exit} ->
           IO.puts "exit!"
         x ->
           raise "meta-single received unexpected message: #{inspect x}"
@@ -50,7 +50,7 @@ defmodule Paracelsus.MetaProcess do
         else
           fun.()
         end
-        Kernel.send(meta, {:end})
+        Kernel.send(meta, {:exit})
       x ->
         raise "meta-single received unexpected message: #{inspect x}"
     end
