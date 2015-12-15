@@ -13,13 +13,21 @@ defmodule Paracelsus.MetaProcess do
 
   def exec do
     receive do
-      {:apply, function, message, from} ->
+      {:apply, function, message, meta} ->
+        Process.put(:self, meta)
         if message do
           function.(message)
         else
           function.()
         end
-        send(from, :end)
+        send(meta, :end)
+    end
+  end
+
+  def self do
+    case Process.get(:self) do
+      nil -> Kernel.self()
+      val -> val
     end
   end
 end
