@@ -29,8 +29,8 @@ defmodule Paracelsus.MetaProcess do
     case Process.get(:self) do
       nil -> kernel_receive(fun)
       meta ->
-        Kernel.send(meta, {:receive, fun})
-        kernel_receive(exec())
+        Kernel.send(meta, :receive)
+        kernel_receive(fun)
     end
   end
 
@@ -42,33 +42,29 @@ defmodule Paracelsus.MetaProcess do
 
   def meta_single_init(fun) do
     exec = Kernel.spawn(__MODULE__, :exec_init, [])
-    f = fn nil -> fun.() end
-    Kernel.send(exec, {:apply, f, nil, Kernel.self()})
-    kernel_receive(meta_single([], f, :dormant, exec))
+    Kernel.send(exec, {:init, fun, Kernel.self()})
+    kernel_receive(meta_single([], :dormant, exec))
   end
 
-  def meta_single(queue, fun, state, exec) do
+  def meta_single(queue, state, exec) do
     fn
-      {:receive, fun} ->
-        IO.puts "{:receive, _}"
+      :receive ->
+        IO.puts ":receive"
         case queue do
           [message|queue] ->
-            Kernel.send(exec, {:apply, fun, message, Kernel.self()})
-            kernel_receive(meta_single(queue, fun, :active, exec))
+            Kernel.send(exec, message)
+            kernel_receive(meta_single(queue, :active, exec))
           _ ->
-            kernel_receive(meta_single(queue, fun, :dormant, exec))
+            kernel_receive(meta_single(queue, :dormant, exec))
         end
       {:message, message} ->
-        IO.puts "{:message, _} # state: #{state}"
-        case state do
-          :dormant ->
-            Kernel.send(exec, {:apply, fun, message, Kernel.self()})
-            kernel_receive(meta_single(queue, fun, :active, exec))
-          :active ->
-            kernel_receive(meta_single(queue ++ [message], fun, :active, exec))
+        IO.puts "{:message, _}"
+        if state == :dormant do
+          Kernel.send(Kernel.self, :receive)
         end
-      {:exit} ->
-        IO.puts "{:exit}"
+        kernel_receive(meta_single(queue ++ [message], :active, exec))
+      :exit ->
+        IO.puts ":exit"
       x ->
         raise "meta-single received unexpected message: #{inspect x}"
     end
@@ -82,12 +78,12 @@ defmodule Paracelsus.MetaProcess do
 
   def exec do
     fn 
-      {:apply, fun, message, meta} ->
+      {:init, fun, meta} ->
         Process.put(:self, meta)
-        fun.(message)
-        Kernel.send(meta, {:exit})
+        fun.()
+        Kernel.send(meta, :exit)
       x ->
-        raise "meta-single received unexpected message: #{inspect x}"
+        raise "exec received unexpected message: #{inspect x}"
     end
   end
 end
