@@ -2,19 +2,19 @@ defmodule Paracelsus.MetaProcess do
 
   import Kernel, except: [self: 0, send: 2]
 
-  def spawn(function) do
+  def spawn(fun) do
     exec = Kernel.spawn(__MODULE__, :exec, [])
-    meta = Kernel.spawn(meta_single([], function, :dormant, exec))
+    meta = Kernel.spawn(meta_single([], fun, :dormant, exec))
     Kernel.send(meta, {:init})
     meta
   end
 
-  def meta_single(queue, function, state, exec) do
+  def meta_single(queue, fun, state, exec) do
     fn ->
       receive do
         {:init} ->
-          Kernel.send(exec, {:apply, function, nil, Kernel.self()})
-          meta_single(queue, function, :active, exec).()
+          Kernel.send(exec, {:apply, fun, nil, Kernel.self()})
+          meta_single(queue, fun, :active, exec).()
         {:receive, fun} ->
           IO.puts "{:receive, _}"
           case queue do
@@ -28,10 +28,10 @@ defmodule Paracelsus.MetaProcess do
           IO.puts "{:message, _} # state: #{state}"
           case state do
             :dormant ->
-              Kernel.send(exec, {:apply, function, message, Kernel.self()})
-              meta_single(queue, function, :active, exec).()
+              Kernel.send(exec, {:apply, fun, message, Kernel.self()})
+              meta_single(queue, fun, :active, exec).()
             :active ->
-              meta_single(queue ++ [message], function, :active, exec).()
+              meta_single(queue ++ [message], fun, :active, exec).()
           end
         {:end} ->
           IO.puts "exit!"
@@ -43,12 +43,12 @@ defmodule Paracelsus.MetaProcess do
 
   def exec do
     receive do # This is special form of `receive`.
-      {:apply, function, message, meta} ->
+      {:apply, fun, message, meta} ->
         Process.put(:self, meta)
         if message do
-          function.(message)
+          fun.(message)
         else
-          function.()
+          fun.()
         end
         Kernel.send(meta, {:end})
       x ->
