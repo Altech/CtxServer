@@ -34,7 +34,7 @@ defmodule Paracelsus.MetaProcess do
               meta_single(queue ++ [message], fun, :active, exec).()
           end
         {:exit} ->
-          IO.puts "exit!"
+          IO.puts "{:exit}"
         x ->
           raise "meta-single received unexpected message: #{inspect x}"
       end
