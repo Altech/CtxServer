@@ -42,16 +42,13 @@ defmodule Paracelsus.MetaProcess do
 
   def meta_single_init(fun) do
     exec = Kernel.spawn(__MODULE__, :exec_init, [])
-    Kernel.send(Kernel.self(), {:init})
-    kernel_receive(meta_single([], fun, :dormant, exec))
+    f = fn nil -> fun.() end
+    Kernel.send(exec, {:apply, f, nil, Kernel.self()})
+    kernel_receive(meta_single([], f, :dormant, exec))
   end
 
   def meta_single(queue, fun, state, exec) do
     fn
-      {:init} ->
-        IO.puts "{:init}"
-        Kernel.send(exec, {:apply, fun, nil, Kernel.self()})
-        kernel_receive(meta_single(queue, fun, :active, exec))
       {:receive, fun} ->
         IO.puts "{:receive, _}"
         case queue do
@@ -87,11 +84,7 @@ defmodule Paracelsus.MetaProcess do
     fn 
       {:apply, fun, message, meta} ->
         Process.put(:self, meta)
-        if message do
-          fun.(message)
-        else
-          fun.()
-        end
+        fun.(message)
         Kernel.send(meta, {:exit})
       x ->
         raise "meta-single received unexpected message: #{inspect x}"
