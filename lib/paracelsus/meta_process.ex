@@ -1,6 +1,6 @@
 defmodule Paracelsus.MetaProcess do
 
-  import Kernel, except: [self: 0, send: 2]
+  import Kernel, except: [self: 0, send: 2, spawn: 1]
 
   def spawn(fun) do
     exec = Kernel.spawn(__MODULE__, :exec, [])
