@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure for your application as:
 #
-#     config :paracelsus, key: :value
+#     config :ctx_server, key: :value
 #
 # And access this configuration in your application as:
 #
-#     Application.get_env(:paracelsus, :key)
+#     Application.get_env(:ctx_server, :key)
 #
 # Or configure a 3rd-party app:
 #

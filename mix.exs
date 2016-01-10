@@ -1,8 +1,8 @@
-defmodule Paracelsus.Mixfile do
+defmodule CtxServer.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :paracelsus,
+    [app: :ctx_server,
      version: "0.0.1",
      elixir: "~> 1.1",
      build_embedded: Mix.env == :prod,
