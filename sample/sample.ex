@@ -25,7 +25,7 @@ end
 
 
 defmodule PurchaseHttpServer do
-  use Context.GenServer
+  use CtxServer
   use WebFramework
 
   defcontext :login do
