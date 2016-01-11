@@ -13,10 +13,10 @@
 
 
 defmodule ItemsHttpServer do
-  use Context.GenServer
+  use CtxServer
   use WebFramework
 
-  def handle_call(request, from, state) do
+  def handle_call(request, from, state, nil) do
     items = ConServer.call :items, {:get_list}
     html = render(:items, items)
     {:reply, [200, html]}
@@ -65,7 +65,7 @@ end
 
 
 defmodule PaymentServer do
-  use Context.GenServer
+  use CtxServer
 
   defcontext :payment
   
