@@ -1,8 +1,10 @@
 defmodule CtxServer.Macro do
-  defmacro defdelegate_module(mod) do
+  defmacro defdelegate_module(mod, opt) do
+    except = opt[:except] || []
     {mod, _} = Code.eval_quoted(mod)
-    functions = mod.__info__(:functions)
-    for {name, arity} <- functions do
+
+    for {name, arity} <- mod.__info__(:functions),
+        !Enum.member?(except, {name, arity}) do
       defdelegate_ast(mod, name, arity)
     end
   end
