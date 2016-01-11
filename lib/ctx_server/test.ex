@@ -3,11 +3,12 @@ defmodule CtxServer.Test do
 
   def handle_call(_, _, state) do
     IO.puts "call!"
-    {:reply, :ok, state}
+    {:reply, Process.get(:"$ctx_server_contexts"), state}
   end
 
   def handle_cast(_, state) do
     IO.puts "cast!"
+    switch_context(:login, true)
     {:noreply, state}
   end
 end

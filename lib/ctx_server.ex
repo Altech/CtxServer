@@ -1,5 +1,6 @@
 defmodule CtxServer do
   import CtxServer.Macro
+  alias CtxServer.Contexts, as: Contexts
 
   defmacro __using__(_) do
     mod = __MODULE__
@@ -7,20 +8,26 @@ defmodule CtxServer do
       use GenServer
 
       def handle_info({unquote(mod.cast_message), req}, state) do
-        unquote(mod).handle_cast(__MODULE__, req, state)
+        unquote(mod).handle_info_cast(__MODULE__, req, state)
       end
 
       def handle_info({unquote(mod.call_message), from, req}, state) do
-        unquote(mod).handle_call(__MODULE__, req, from, state)
+        unquote(mod).handle_info_call(__MODULE__, req, from, state)
       end
+
+      defdelegate switch_context(context, value), to: unquote(mod)
     end
   end
 
-  def handle_cast(mod, req, state) do
+  def switch_context(context, value) do
+    Contexts.update(context, value)
+  end
+
+  def handle_info_cast(mod, req, state) do
     mod.handle_cast(req, state)
   end
 
-  def handle_call(mod, req, from, state) do
+  def handle_info_call(mod, req, from, state) do
     val = try do
             mod.handle_call(req, from, state)
           rescue
@@ -46,8 +53,6 @@ defmodule CtxServer do
 
   @call_message :"$ctx_call"
   @cast_message :"$ctx_cast"
-  def cast_message, do: @cast_message
-  def call_message, do: @call_message
 
   # From GenServer module
   
@@ -105,4 +110,7 @@ defmodule CtxServer do
     :ok
   end
 
+  # Used in __using__ macro
+  def cast_message, do: @cast_message
+  def call_message, do: @call_message
 end
