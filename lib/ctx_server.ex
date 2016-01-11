@@ -1,6 +1,7 @@
 defmodule CtxServer do
   import CtxServer.Macro
   alias CtxServer.Contexts, as: Contexts
+  alias CtxServer.Request, as: Request
 
   defmacro __using__(_) do
     mod = __MODULE__
@@ -24,12 +25,15 @@ defmodule CtxServer do
   end
 
   def handle_info_cast(mod, req, state) do
-    mod.handle_cast(req, state)
+    Contexts.update(req.contexts)
+    mod.handle_cast(req.body, state)
   end
 
   def handle_info_call(mod, req, from, state) do
+    Contexts.update(req.contexts)
+
     val = try do
-            mod.handle_call(req, from, state)
+            mod.handle_call(req.body, from, state)
           rescue
             e -> {'EXIT', Exception.message(e)}
           end
@@ -59,7 +63,7 @@ defmodule CtxServer do
   @spec call(server, term, timeout) :: term
   def call(server, request, timeout \\ 5000) do
     try do
-      :gen.call(server, @call_message, request, timeout) # Modified
+      :gen.call(server, @call_message, Request.new(request), timeout) # Modified
     catch
       :exit, reason ->
         exit({reason, {__MODULE__, :call, [server, request, timeout]}})
@@ -102,7 +106,7 @@ defmodule CtxServer do
     do: do_send(dest, cast_msg(request))
   
   defp cast_msg(req) do
-    {@cast_message, req} # Modified
+    {@cast_message, CtxServer.Request.new(req)} # Modified
   end
 
   defp do_send(dest, msg) do

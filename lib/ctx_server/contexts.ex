@@ -4,9 +4,16 @@ defmodule CtxServer.Contexts do
   def update(context, value) do
     updated = Map.put(current, context, value)
     Process.put(@dict_key, updated)
+    :ok
   end
 
-  defp current do
+  def update(map) do
+    updated = Map.merge(current, map)
+    Process.put(@dict_key, updated)
+    :ok
+  end
+
+  def current do
     Process.get(@dict_key) || %{}
   end
 end

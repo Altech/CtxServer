@@ -1,13 +1,24 @@
 defmodule CtxServer.Test do
   use CtxServer
 
-  def handle_call(_, _, state) do
-    IO.puts "call!"
-    {:reply, Process.get(:"$ctx_server_contexts"), state}
+  defmacro debug_info(request) do
+    quote do
+      {name, arity} = __ENV__.function
+      IO.puts """
+      CALL: #{name}/#{arity}
+        request: #{unquote(request)},
+        contexts: #{inspect CtxServer.Contexts.current}
+      """
+    end
   end
 
-  def handle_cast(_, state) do
-    IO.puts "cast!"
+  def handle_call(request, _, state) do
+    debug_info(request)
+    {:reply, request, state}
+  end
+
+  def handle_cast(request, state) do
+    debug_info(request)
     switch_context(:login, true)
     {:noreply, state}
   end
