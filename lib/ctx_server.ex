@@ -21,7 +21,7 @@ defmodule CtxServer do
   end
 
   def switch_context(context, value) do
-    Contexts.update(context, value)
+    Contexts.update([{context, value}])
   end
 
   def handle_info_cast(mod, req, state) do
