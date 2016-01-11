@@ -26,17 +26,18 @@ defmodule CtxServer do
 
   def handle_info_cast(mod, req, state) do
     Contexts.update(req.contexts)
-    mod.handle_cast(req.body, state)
+
+    rescue_with_tuple do
+      mod.handle_cast(req.body, state)
+    end
   end
 
   def handle_info_call(mod, req, from, state) do
     Contexts.update(req.contexts)
 
-    val = try do
-            mod.handle_call(req.body, from, state)
-          rescue
-            e -> {'EXIT', Exception.message(e)}
-          end
+    val = rescue_with_tuple do
+      mod.handle_call(req.body, from, state)
+    end
 
     case val do
       {:reply, reply, new_state} ->

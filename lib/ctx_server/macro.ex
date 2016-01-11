@@ -32,4 +32,14 @@ defmodule CtxServer.Macro do
       defdelegate unquote(name)(arg1, arg2, arg3, arg4), to: unquote(mod)
     end
   end
+
+  defmacro rescue_with_tuple(do: expr) do
+    quote do
+      try do
+        unquote(expr)
+      rescue
+        e -> {'EXIT', Exception.message(e)}
+      end
+    end
+  end
 end
