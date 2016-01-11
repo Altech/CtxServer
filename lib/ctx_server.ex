@@ -4,19 +4,19 @@ defmodule CtxServer do
   alias CtxServer.Request, as: Request
 
   defmacro __using__(_) do
-    mod = __MODULE__
     quote location: :keep do
       use GenServer
 
-      def handle_info({unquote(mod.cast_message), req}, state) do
-        unquote(mod).handle_info_cast(__MODULE__, req, state)
+      def handle_info({unquote(CtxServer.cast_message), req}, state) do
+        CtxServer.handle_info_cast(__MODULE__, req, state)
       end
 
-      def handle_info({unquote(mod.call_message), from, req}, state) do
-        unquote(mod).handle_info_call(__MODULE__, req, from, state)
+      def handle_info({unquote(CtxServer.call_message), from, req}, state) do
+        CtxServer.handle_info_call(__MODULE__, req, from, state)
       end
 
-      defdelegate switch_context(context, value), to: unquote(mod)
+      import CtxServer, only: [switch_context: 2]
+      import CtxServer.Macro, only: [context: 2]
     end
   end
 

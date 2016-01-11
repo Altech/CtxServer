@@ -12,15 +12,16 @@ defmodule CtxServer.Test do
     end
   end
 
-  def handle_call(request, _, state, %{login: false}) do
-    debug_info(request)
-    {:reply, request, state}
-  end
+  context login: true, payment: :normal do
+    def handle_cast(request, state) do
+      debug_info(request)
+      {:noreply, state}
+    end
 
-  def handle_cast(request, state, %{login: true}) do
-    debug_info(request)
-    switch_context(:login, true)
-    {:noreply, state}
+    def handle_call(request, _, state) do
+      debug_info(request)
+      {:reply, request, state}
+    end
   end
 end
 
@@ -28,6 +29,7 @@ end
 quote do
   # CtxServer.switch_context :login, true
   {:ok, pid} = CtxServer.start(CtxServer.Test, [])
+  CtxServer.Contexts.update login: true, payment: :normal
   CtxServer.cast(pid, :foo)
   CtxServer.call(pid, :foo)
 end
