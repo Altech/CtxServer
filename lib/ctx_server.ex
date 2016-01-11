@@ -28,7 +28,7 @@ defmodule CtxServer do
     Contexts.update(req.contexts)
 
     rescue_with_tuple do
-      mod.handle_cast(req.body, state)
+      mod.handle_cast(req.body, state, Contexts.current)
     end
   end
 
@@ -36,7 +36,7 @@ defmodule CtxServer do
     Contexts.update(req.contexts)
 
     val = rescue_with_tuple do
-      mod.handle_call(req.body, from, state)
+      mod.handle_call(req.body, from, state, Contexts.current)
     end
 
     case val do
