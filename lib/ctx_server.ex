@@ -2,9 +2,42 @@ defmodule CtxServer do
   import CtxServer.Macro
 
   defmacro __using__(_) do
+    mod = __MODULE__
     quote location: :keep do
       use GenServer
-      unquote(handle_info_ast)
+
+      def handle_info({unquote(mod.cast_message), req}, state) do
+        unquote(mod).handle_cast(__MODULE__, req, state)
+      end
+
+      def handle_info({unquote(mod.call_message), from, req}, state) do
+        unquote(mod).handle_call(__MODULE__, req, from, state)
+      end
+    end
+  end
+
+  def handle_cast(mod, req, state) do
+    mod.handle_cast(req, state)
+  end
+
+  def handle_call(mod, req, from, state) do
+    val = try do
+            mod.handle_call(req, from, state)
+          rescue
+            e -> {'EXIT', Exception.message(e)}
+          end
+
+    case val do
+      {:reply, reply, new_state} ->
+        :gen_server.reply(from, reply)
+        {:noreply, new_state}
+      {:reply, reply, new_state, time} ->
+        :gen_server.reply(from, reply)
+        {:noreply, new_state, time}
+      {:stop, reason, reply, new_state} ->
+        :gen_server.reply(from, reply) # [TODO] Exactly accurate semantics for this pattern
+        {:stop, reason, new_state}
+      other -> other
     end
   end
 
@@ -13,7 +46,11 @@ defmodule CtxServer do
 
   @call_message :"$ctx_call"
   @cast_message :"$ctx_cast"
+  def cast_message, do: @cast_message
+  def call_message, do: @call_message
 
+  # From GenServer module
+  
   @spec call(server, term, timeout) :: term
   def call(server, request, timeout \\ 5000) do
     try do
@@ -66,48 +103,6 @@ defmodule CtxServer do
   defp do_send(dest, msg) do
     send(dest, msg)
     :ok
-  end
-
-  defp handle_info_ast do
-    cast_message = @cast_message
-    call_message = @call_message
-    quote do
-      def handle_info({unquote(cast_message), req}, state) do
-        IO.puts """
-        HANDLE INFO MESSAGE(CAST):
-        #{inspect req}
-        """
-        handle_cast(req, state)
-      end
-
-      # https://github.com/blackberry/Erlang-OTP/blob/master/lib/stdlib/src/gen_server.erl#L577-L595
-      # https://github.com/blackberry/Erlang-OTP/blob/master/lib/stdlib/src/gen_server.erl#L628-L640
-      def handle_info({unquote(call_message), from, req}, state) do
-        IO.puts """
-        HANDLE INFO MESSAGE(CALL):
-        #{inspect req}
-        """
-
-        val = try do
-                handle_call(req, from, state)
-              rescue
-                e -> {'EXIT', Exception.message(e)}
-              end
-        
-        case val do
-          {:reply, reply, new_state} ->
-            :gen_server.reply(from, reply)
-            {:noreply, new_state}
-          {:reply, reply, new_state, time} ->
-            :gen_server.reply(from, reply)
-            {:noreply, new_state, time}
-          {:stop, reason, reply, new_state} ->
-            :gen_server.reply(from, reply) # [TODO] Exactly accurate semantics for this pattern
-            {:stop, reason, new_state}
-          other -> other
-        end
-      end
-    end
   end
 
 end
