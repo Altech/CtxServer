@@ -6,6 +6,6 @@ defmodule CtxServer.Request do
   defstruct body: nil, contexts: %{}
 
   def new(body) do
-    %__MODULE__{body: body, contexts: CtxServer.Contexts.current}
+    %__MODULE__{body: body, contexts: CtxServer.Contexts.current_values} # [TODO] Send only global contexts
   end
 end
