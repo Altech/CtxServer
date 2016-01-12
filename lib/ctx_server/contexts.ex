@@ -7,6 +7,10 @@ defmodule CtxServer.Contexts do
     :ok
   end
 
+  def current(name) do
+    current[name]
+  end
+
   def current do
     Process.get(@dict_key) || %{}
   end
