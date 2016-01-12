@@ -13,11 +13,22 @@ defmodule CtxServer.Contexts do
   end
 
   def update_values(values) do
-    updated = for {name, value} <- values, into: current do
-                {name, value} # [TODO] compare time and raise if older and priority:time
-              end
+    updated = for {name, value} <- values, into: current_values do
+      validate(name, value, current_values[name])
+    end
     Process.put(@dict_key, updated)
     :ok
+  end
+
+  defp validate(name, sender_value, receiver_value) do
+    if Code.ensure_loaded?(ApplicationContext) &&
+      ApplicationContext.priority(name) == :newer &&
+      sender_value.label != receiver_value.label &&
+      !(sender_value.time > receiver_value.time) do
+      raise "Inconsistency"
+    else
+      {name, sender_value}
+    end
   end
 
   def current(name) do
@@ -25,7 +36,6 @@ defmodule CtxServer.Contexts do
   end
 
   def current do
-    IO.inspect current_values
     for {name, context} <- current_values, into: %{} do
       {name, context.label}
     end
