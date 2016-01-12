@@ -1,6 +1,6 @@
 defmodule CtxServer.Macro do
   defmacro context(contexts, do: block) do
-    elem Macro.prewalk(block, contexts, &modify_handers_ast/2), 1
+    elem Macro.prewalk(block, contexts, &modify_handers_ast/2), 0
   end
 
   defp modify_handers_ast({:def, meta1, [{name, meta2, args}, [do: body]]}, contexts)
