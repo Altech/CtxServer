@@ -1,5 +1,5 @@
 defmodule ApplicationContext do
-  use CtxServer.Context
+  use CtxServer.ContextDSL
 
   # Define a stored contexts
   defcontext :login,        scope: :global, priority: :sender
