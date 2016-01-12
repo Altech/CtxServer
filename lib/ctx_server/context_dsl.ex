@@ -1,9 +1,9 @@
-defmodule CtxServer.Context do
+defmodule CtxServer.ContextDSL do
   defmacro __using__(_) do
     quote do
-      import CtxServer.Context, only: [defcontext: 2]
+      import CtxServer.ContextDSL, only: [defcontext: 2]
       Module.register_attribute __MODULE__, :context_definitions, accumulate: true, persist: false
-      @before_compile CtxServer.Context
+      @before_compile CtxServer.ContextDSL
     end
   end
 
@@ -31,7 +31,7 @@ defmodule CtxServer.Context do
   defp context_ast({name, scope, priority}) do
     quote do
       def context(unquote(name)) do
-        CtxServer.Contexts.current(unquote(name))
+        CtxServer.Contexts.current_value(unquote(name))
       end
       def scope(unquote(name)), do: unquote(scope)
       def priority(unquote(name)), do: unquote(priority)
