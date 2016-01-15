@@ -35,6 +35,16 @@ defmodule CtxServer.Test do
       {:reply, request, state}
     end
   end
+
+  def handle_cast(request, state) do
+    debug_info(request)
+    {:noreply, state}
+  end
+
+  def handle_call(request, from, state) do
+    debug_info(request)
+    {:reply, request, state}
+  end
 end
 
 

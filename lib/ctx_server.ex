@@ -17,6 +17,7 @@ defmodule CtxServer do
 
       import CtxServer, only: [switch_context: 2]
       import CtxServer.Macro, only: [context: 2]
+      @before_compile {CtxServer.Macro, :set_default_handlers}
     end
   end
 
