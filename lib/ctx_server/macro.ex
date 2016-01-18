@@ -1,31 +1,60 @@
 defmodule CtxServer.Macro do
   defmacro context(contexts, do: block) do
-    elem Macro.prewalk(block, contexts, &modify_handers_ast/2), 0
+    quote do
+      if true do # To create lexical scope for def/2
+        import Kernel,        except: [def: 2]
+        import CtxServer.Macro, only: [def: 2]
+        contexts = for {name, value} <- unquote(contexts), into: %{}, do: {name, value}
+        @contexts {:"$contexts", contexts}
+        unquote(block)
+        @contexts {:"$contexts", %{}}
+      end
+    end
   end
 
-  defp modify_handers_ast({:def, meta1, [{name, meta2, args}, [do: body]]}, contexts)
-  when name == :handle_call and length(args) == 3 or
-       name == :handle_cast and length(args) == 2 do
-    new_ast = modify_args({:def, meta1, [{name, meta2, args}, [do: body]]}, contexts)
-    {new_ast, contexts}
+
+  defmacro def({name, line, args}, expr) do
+    call              = {name, line, rename_underscore(args)}
+    call_with_context = {name, line, args ++ [{:@, line, [{:contexts, line, nil}]}]}
+    def1 = CtxServer.Kernel.define(:def, call_with_context, expr,  __CALLER__)
+    def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, rename_underscore(args)), __CALLER__)
+    quote do
+      unquote(def1)
+      unquote(def2)
+    end
   end
 
-  defp modify_handers_ast(ast, contexts) do
-    {ast, contexts}
+  defp proxy_expr(name, args) do
+    ast = quote do
+      args = unquote(args) ++ [{:"$contexts", CtxServer.Contexts.current}]
+      IO.puts """
+      apply(__MODULE__, unquote(name), args)
+        __MODULE__ : #{inspect __MODULE__}
+        unquote(name) : #{inspect unquote(name)}
+        args : #{inspect args}
+      """
+      apply(__MODULE__, unquote(name), args)
+    end
+    [do: ast]
   end
 
-  defp modify_args({:def, meta1, [{function_name, meta2, args}, [do: body]]}, contexts) do
-    new_args = args ++ [Macro.escape(Enum.into(contexts, %{}))]
-    {:def, meta1, [{function_name, meta2, new_args}, [do: body]]}
+  defp rename_underscore(args) do
+    for {name, meta, empty} <- args do
+      if name == :_ do
+        {:underscore, meta, empty}
+      else
+        {name, meta, empty}
+      end
+    end
   end
 
 
   defmacro set_default_handlers(_env) do
     quote do
-      def handle_call(request, from, state, _context) do
+      def handle_call(request, from, state, {:"$contexts", _}) do
         handle_call(request, from, state)
       end
-      def handle_cast(request, state, _context) do
+      def handle_cast(request, state, {:"$contexts", _}) do
         handle_cast(request, state)
       end
     end

@@ -1,5 +1,5 @@
 defmodule CtxServer do
-  import CtxServer.Macro
+  import CtxServer.Macro, only: [defdelegate_module: 2, rescue_with_tuple: 1]
   alias CtxServer.Contexts, as: Contexts
   alias CtxServer.Request, as: Request
 
@@ -29,7 +29,7 @@ defmodule CtxServer do
     Contexts.update_values(req.contexts)
 
     rescue_with_tuple do
-      mod.handle_cast(req.body, state, Contexts.current)
+      mod.handle_cast(req.body, state)
     end
   end
 
@@ -37,7 +37,7 @@ defmodule CtxServer do
     Contexts.update_values(req.contexts)
 
     val = rescue_with_tuple do
-      mod.handle_call(req.body, from, state, Contexts.current)
+      mod.handle_call(req.body, from, state)
     end
 
     case val do
@@ -65,6 +65,7 @@ defmodule CtxServer do
   @spec call(server, term, timeout) :: term
   def call(server, request, timeout \\ 5000) do
     try do
+      IO.inspect Request.new(request)
       :gen.call(server, @call_protocol, Request.new(request), timeout) # Modified
     catch
       :exit, reason ->
