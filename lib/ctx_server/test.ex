@@ -36,14 +36,35 @@ defmodule CtxServer.Test do
     end
   end
 
-  def handle_cast(request, state) do
-    debug_info(request)
-    {:noreply, state}
+  context :any do
+    def handle_cast(request, state) do
+      debug_info(request)
+      {:noreply, state}
+    end
+
+    def handle_call(request, from, state) do
+      foo
+      debug_info(request)
+      {:reply, request, state}
+    end
   end
 
-  def handle_call(request, from, state) do
-    debug_info(request)
-    {:reply, request, state}
+  context login: true do
+    def foo do
+      IO.puts "foo(login: true)"
+    end
+  end
+
+  context login: false do
+    def foo do
+      IO.puts "foo(login: false)"
+    end
+  end
+
+  context :any do
+    def foo do
+      IO.puts "foo(any)"
+    end
   end
 end
 
