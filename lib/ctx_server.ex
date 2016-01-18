@@ -65,7 +65,6 @@ defmodule CtxServer do
   @spec call(server, term, timeout) :: term
   def call(server, request, timeout \\ 5000) do
     try do
-      IO.inspect Request.new(request)
       :gen.call(server, @call_protocol, Request.new(request), timeout) # Modified
     catch
       :exit, reason ->

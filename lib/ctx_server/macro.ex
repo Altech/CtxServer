@@ -1,13 +1,18 @@
 defmodule CtxServer.Macro do
   defmacro context(contexts, do: block) do
+    {contexts, mod} = if (contexts == :any) do
+      {[], CtxServer.Macro2}
+    else
+      {contexts, CtxServer.Macro}
+    end
+
     quote do
       if true do # To create lexical scope for def/2
-        import Kernel,        except: [def: 2]
-        import CtxServer.Macro, only: [def: 2]
+        import Kernel, except: [def: 2]
+        import unquote(mod), only: [def: 2]
         contexts = for {name, value} <- unquote(contexts), into: %{}, do: {name, value}
         @contexts {:"$contexts", contexts}
         unquote(block)
-        @contexts {:"$contexts", %{}}
       end
     end
   end
@@ -24,21 +29,15 @@ defmodule CtxServer.Macro do
     end
   end
 
-  defp proxy_expr(name, args) do
+  def proxy_expr(name, args) do
     ast = quote do
       args = unquote(args) ++ [{:"$contexts", CtxServer.Contexts.current}]
-      IO.puts """
-      apply(__MODULE__, unquote(name), args)
-        __MODULE__ : #{inspect __MODULE__}
-        unquote(name) : #{inspect unquote(name)}
-        args : #{inspect args}
-      """
       apply(__MODULE__, unquote(name), args)
     end
     [do: ast]
   end
 
-  defp rename_underscore(args) do
+  def rename_underscore(args) do
     for {name, meta, empty} <- args do
       if name == :_ do
         {:underscore, meta, empty}
