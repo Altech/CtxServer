@@ -50,18 +50,6 @@ defmodule CtxServer.Macro do
   end
 
 
-  defmacro set_default_handlers(_env) do
-    quote do
-      def handle_call(request, from, state, {:"$contexts", _}) do
-        handle_call(request, from, state)
-      end
-      def handle_cast(request, state, {:"$contexts", _}) do
-        handle_cast(request, state)
-      end
-    end
-  end
-
-
   defmacro defdelegate_module(mod, opt) do
     except = opt[:except] || []
     {mod, _} = Code.eval_quoted(mod)
