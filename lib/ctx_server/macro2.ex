@@ -8,7 +8,7 @@ defmodule CtxServer.Macro2 do
 
   defmacro def({name, line, args}, expr) do
     call              = {name, line, rename_underscore(args)}
-    call_with_context = {name, line, args ++ [{:_, line, nil}]}
+    call_with_context = {name, line, List.wrap(args) ++ [{:_, line, nil}]}
     def1 = CtxServer.Kernel.define(:def, call_with_context, expr,  __CALLER__)
     def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, rename_underscore(args)), __CALLER__)
     quote do

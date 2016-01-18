@@ -20,7 +20,7 @@ defmodule CtxServer.Macro do
 
   defmacro def({name, line, args}, expr) do
     call              = {name, line, rename_underscore(args)}
-    call_with_context = {name, line, args ++ [{:@, line, [{:contexts, line, nil}]}]}
+    call_with_context = {name, line, List.wrap(args) ++ [{:@, line, [{:contexts, line, nil}]}]}
     def1 = CtxServer.Kernel.define(:def, call_with_context, expr,  __CALLER__)
     def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, rename_underscore(args)), __CALLER__)
     quote do
@@ -31,11 +31,13 @@ defmodule CtxServer.Macro do
 
   def proxy_expr(name, args) do
     ast = quote do
-      args = unquote(args) ++ [{:"$contexts", CtxServer.Contexts.current}]
+      args = unquote(List.wrap(args)) ++ [{:"$contexts", CtxServer.Contexts.current}]
       apply(__MODULE__, unquote(name), args)
     end
     [do: ast]
   end
+
+  def rename_underscore(nil), do: nil
 
   def rename_underscore(args) do
     for {name, meta, empty} <- args do
