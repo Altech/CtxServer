@@ -54,6 +54,7 @@ defmodule CtxServerTest do
 
     context login: true do
       def foo do
+        IO.puts "context(:login) = #{context(:login)}"
         IO.puts "foo(login: true)"
       end
     end
@@ -77,5 +78,10 @@ defmodule CtxServerTest do
     CtxServer.Contexts.update login: true, payment: :normal
     CtxServer.cast(pid, :foo)
     CtxServer.call(pid, :foo)
+  end
+
+  test "foo" do
+    CtxServer.Contexts.update login: true
+    Test.foo
   end
 end

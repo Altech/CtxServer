@@ -15,14 +15,18 @@ defmodule CtxServer do
         CtxServer.handle_info_call(__MODULE__, req, from, state)
       end
 
-      import CtxServer, only: [switch_context: 2]
+      import CtxServer, only: [switch_context: 2, context: 1]
       import CtxServer.Macro, only: [context: 2]
       Module.register_attribute __MODULE__, :defined_proxies, accumulate: true, persist: false
     end
   end
 
-  def switch_context(context, value) do
-    Contexts.update([{context, value}])
+  def switch_context(name, value) do
+    Contexts.update([{name, value}])
+  end
+
+  def context(name) do
+    Contexts.current(name)
   end
 
   def handle_info_cast(mod, req, state) do
