@@ -4,7 +4,7 @@ defmodule CtxServer.Contexts do
   @dict_key :"$ctx_server_contexts"
   
   def update(map) do
-    # [TODO] Validate when defined ApplicationContext
+    # [TODO] Validate when defined ApplicationContexts
     time = :os.timestamp
     updated = for {name, label} <- map, into: stored_current do
                 {name, ContextValue.new(label, time)}
@@ -22,8 +22,8 @@ defmodule CtxServer.Contexts do
   end
 
   defp validate(name, sender_value, receiver_value) do
-    if Code.ensure_loaded?(ApplicationContext) &&
-      ApplicationContext.priority(name) == :newer &&
+    if Code.ensure_loaded?(ApplicationContexts) &&
+      ApplicationContexts.priority(name) == :newer &&
       sender_value.label != receiver_value.label &&
       !(sender_value.time > receiver_value.time) do
       raise "Inconsistency"
@@ -47,9 +47,9 @@ defmodule CtxServer.Contexts do
   end
 
   def computed_current do
-    if Code.ensure_loaded?(ApplicationContext) do
-      for name <- ApplicationContext.computed_contexts, into: %{} do
-        {name, ApplicationContext.context(name)}
+    if Code.ensure_loaded?(ApplicationContexts) do
+      for name <- ApplicationContexts.computed_contexts, into: %{} do
+        {name, ApplicationContexts.context(name)}
       end
     else
       %{}
