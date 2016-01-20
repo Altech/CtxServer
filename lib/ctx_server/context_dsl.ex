@@ -23,9 +23,7 @@ defmodule CtxServer.ContextDSL do
 
   defmacro __before_compile__(env) do
     definitions = Module.get_attribute(env.module, :context_definitions)
-    ast1 = for definition <- definitions do
-             context_ast(definition)
-           end
+    ast1 = for definition <- definitions, do: context_ast(definition)
     ast2 = computed_contexts_ast(definitions)
     [ast2|ast1]
   end
