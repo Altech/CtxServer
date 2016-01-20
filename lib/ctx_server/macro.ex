@@ -40,11 +40,10 @@ defmodule CtxServer.Macro do
   def rename_underscore(nil), do: nil
 
   def rename_underscore(args) do
-    for {name, meta, empty} <- args do
-      if name == :_ do
-        {:underscore, meta, empty}
-      else
-        {name, meta, empty}
+    for arg <- args do
+      case arg do
+        {:_, meta, empty} -> {:underscore, meta, empty}
+        _ -> arg
       end
     end
   end
