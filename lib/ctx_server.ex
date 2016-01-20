@@ -17,6 +17,7 @@ defmodule CtxServer do
 
       import CtxServer, only: [switch_context: 2]
       import CtxServer.Macro, only: [context: 2]
+      Module.register_attribute __MODULE__, :defined_proxies, accumulate: true, persist: false
     end
   end
 
