@@ -23,15 +23,17 @@ defmodule CtxServer.ContextDSL do
 
   defmacro __before_compile__(env) do
     definitions = Module.get_attribute(env.module, :context_definitions)
-    for definition <- definitions do
-      context_ast(definition)
-    end
+    ast1 = for definition <- definitions do
+             context_ast(definition)
+           end
+    ast2 = computed_contexts_ast(definitions)
+    [ast2|ast1]
   end
 
   defp context_ast({name, scope, priority}) do
     quote do
       def context(unquote(name)) do
-        CtxServer.Contexts.current_value(unquote(name))
+        CtxServer.Contexts.stored_current[unquote(name)]
       end
       def scope(unquote(name)), do: unquote(scope)
       def priority(unquote(name)), do: unquote(priority)
@@ -42,6 +44,15 @@ defmodule CtxServer.ContextDSL do
     quote do
       def context(unquote(name)) do
         unquote(computation)
+      end
+    end
+  end
+
+  defp computed_contexts_ast(definitions) do
+    computed_contexts = for {name, _} <- definitions, do: name
+    quote do
+      def computed_contexts do
+        unquote(computed_contexts)
       end
     end
   end

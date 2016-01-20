@@ -4,8 +4,9 @@ defmodule CtxServer.Contexts do
   @dict_key :"$ctx_server_contexts"
   
   def update(map) do
+    # [TODO] Validate when defined ApplicationContext
     time = :os.timestamp
-    updated = for {name, label} <- map, into: current do
+    updated = for {name, label} <- map, into: stored_current do
                 {name, ContextValue.new(label, time)}
               end
     Process.put(@dict_key, updated)
@@ -36,8 +37,22 @@ defmodule CtxServer.Contexts do
   end
 
   def current do
+    Map.merge(stored_current, computed_current)
+  end
+
+  def stored_current do
     for {name, context} <- current_values, into: %{} do
       {name, context.label}
+    end
+  end
+
+  def computed_current do
+    if Code.ensure_loaded?(ApplicationContext) do
+      for name <- ApplicationContext.computed_contexts, into: %{} do
+        {name, ApplicationContext.context(name)}
+      end
+    else
+      %{}
     end
   end
 
