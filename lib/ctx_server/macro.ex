@@ -19,10 +19,10 @@ defmodule CtxServer.Macro do
 
 
   defmacro def({name, line, args}, expr) do
-    call              = {name, line, rename_underscore(args)}
+    call              = {name, line, proxy_args(args)}
     call_with_context = {name, line, List.wrap(args) ++ [{:@, line, [{:contexts, line, nil}]}]}
     def1 = CtxServer.Kernel.define(:def, call_with_context, expr,  __CALLER__)
-    def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, rename_underscore(args)), __CALLER__)
+    def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, proxy_args(args)), __CALLER__)
     quote do
       unquote(def1)
       unquote(def2)
@@ -37,14 +37,11 @@ defmodule CtxServer.Macro do
     [do: ast]
   end
 
-  def rename_underscore(nil), do: nil
+  def proxy_args(nil), do: nil
 
-  def rename_underscore(args) do
-    for arg <- args do
-      case arg do
-        {:_, meta, empty} -> {:underscore, meta, empty}
-        _ -> arg
-      end
+  def proxy_args(args) do
+    for {_, i} <- Enum.with_index(args) do
+      {String.to_atom("arg#{i+1}"), [line: 1], nil}
     end
   end
 

@@ -43,7 +43,6 @@ defmodule CtxServer.Test do
     end
 
     def handle_call(request, from, state) do
-      foo
       debug_info(request)
       {:reply, request, state}
     end
