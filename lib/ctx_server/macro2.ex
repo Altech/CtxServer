@@ -11,9 +11,13 @@ defmodule CtxServer.Macro2 do
     call_with_context = {name, line, List.wrap(args) ++ [{:_, line, nil}]}
     def1 = CtxServer.Kernel.define(:def, call_with_context, expr,  __CALLER__)
     def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, proxy_args(args)), __CALLER__)
+    sign = {name, length(List.wrap(args))}
     quote do
       unquote(def1)
-      unquote(def2)
+      unless Enum.member?(@defined_proxies, unquote(sign)) do
+        unquote(def2)
+        @defined_proxies unquote(sign)
+      end
     end
   end
 end
