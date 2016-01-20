@@ -50,9 +50,13 @@ defmodule CtxServer.ContextDSL do
 
   defp computed_contexts_ast(definitions) do
     computed_contexts = for {name, _} <- definitions, do: name
+    stored_contexts = for {name, _, _} <- definitions, do: name
     quote do
       def computed_contexts do
         unquote(computed_contexts)
+      end
+      def stored_contexts do
+        unquote(stored_contexts)
       end
     end
   end
