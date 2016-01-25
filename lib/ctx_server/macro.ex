@@ -10,8 +10,7 @@ defmodule CtxServer.Macro do
       if true do # To create lexical scope for def/2
         import Kernel, except: [def: 2]
         import unquote(mod), only: [def: 2]
-        contexts = for {name, value} <- unquote(contexts), into: %{}, do: {name, value}
-        @contexts {:"$contexts", contexts}
+        @contexts {:"$contexts", Enum.into(unquote(contexts), %{})}
         unquote(block)
       end
     end
@@ -19,10 +18,11 @@ defmodule CtxServer.Macro do
 
 
   defmacro def({name, line, args}, expr) do
+    import CtxServer.Kernel, only: [define: 4]
     call              = {name, line, proxy_args(args)}
-    call_with_context = {name, line, List.wrap(args) ++ [{:@, line, [{:contexts, line, nil}]}]}
-    def1 = CtxServer.Kernel.define(:def, call_with_context, expr,  __CALLER__)
-    def2 = CtxServer.Kernel.define(:def, call, proxy_expr(name, proxy_args(args)), __CALLER__)
+    call_with_context = {name, line, List.wrap(args) ++ [quote do: @contexts]}
+    def1 = define(:def, call_with_context, expr,  __CALLER__)
+    def2 = define(:def, call, proxy_expr(name, proxy_args(args)), __CALLER__)
     sign = {name, length(List.wrap(args))}
     quote do
       unquote(def1)
@@ -90,7 +90,7 @@ defmodule CtxServer.Macro do
       try do
         unquote(expr)
       rescue
-        e -> {'EXIT', Exception.message(e)}
+        e -> {:EXIT, Exception.message(e)}
       end
     end
   end
