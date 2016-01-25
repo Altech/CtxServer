@@ -1,11 +1,12 @@
 defmodule CtxServer do
   import CtxServer.Macro, only: [defdelegate_module: 2, rescue_with_tuple: 1]
-  alias CtxServer.Contexts, as: Contexts
-  alias CtxServer.Request, as: Request
+  alias CtxServer.Contexts
+  alias CtxServer.Request
 
   defmacro __using__(_) do
     quote location: :keep do
       use GenServer
+      use CtxServer.COP
 
       def handle_info({unquote(CtxServer.cast_protocol), req}, state) do
         CtxServer.handle_info_cast(__MODULE__, req, state)
@@ -14,19 +15,7 @@ defmodule CtxServer do
       def handle_info({unquote(CtxServer.call_protocol), from, req}, state) do
         CtxServer.handle_info_call(__MODULE__, req, from, state)
       end
-
-      import CtxServer, only: [switch_context: 2, context: 1]
-      import CtxServer.Macro, only: [context: 2]
-      Module.register_attribute __MODULE__, :defined_proxies, accumulate: true, persist: false
     end
-  end
-
-  def switch_context(name, value) do
-    Contexts.update([{name, value}])
-  end
-
-  def context(name) do
-    Contexts.current(name)
   end
 
   def handle_info_cast(mod, req, state) do
